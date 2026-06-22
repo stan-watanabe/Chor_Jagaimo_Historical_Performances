@@ -71,6 +71,12 @@
             font-size: 1.2rem;
             margin: 20px 0;
         }
+        .table-responsive {
+            /* auto を scroll に変更して、強制的にバー（レール部分）を表示させます */
+            overflow-x: scroll; 
+            /* バーが表と被らないように少し余白を設けます */
+            padding-bottom: 10px; 
+        }
         /* 横スクロールバーを常に表示して目立たせる設定 */
         .table-responsive::-webkit-scrollbar {
             height: 12px;
