@@ -54,13 +54,20 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            white-space: nowrap; 
+            /* 変更: white-space: nowrap; を削除し、折り返しを許可します */
         }
+        
         th, td {
             border: 1px solid #ddd;
             padding: 12px;
             text-align: left;
             font-size: 0.95rem;
+            
+            /* ▼ 追加: 列幅の制限と折り返しの設定 ▼ */
+            white-space: normal;       /* 文字の折り返しを許可 */
+            overflow-wrap: break-word; /* 長い英単語やURLも枠内で強制的に折り返す */
+            min-width: 80px;           /* 各列が最低限確保する幅 */
+            max-width: 250px;          /* ★この幅を超えたら折り返す（数値は調整可能です） */
         }
 
         th {
