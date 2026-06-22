@@ -14,7 +14,7 @@
             padding: 20px;
         }
         .container {
-            max-width: 1000px;
+            max-width: 1200px; /* 全列表示に合わせて少し幅を広げました */
             margin: 0 auto;
             background: #fff;
             padding: 30px;
@@ -41,12 +41,13 @@
             border-radius: 4px;
         }
         .table-responsive {
-            overflow-x: auto;
+            overflow-x: auto; /* 画面より表が広い場合は横スクロールになります */
         }
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
+            white-space: nowrap; /* セル内の文字の折り返しを防止 */
         }
         th, td {
             border: 1px solid #ddd;
@@ -57,7 +58,6 @@
         th {
             background-color: #3498db;
             color: white;
-            white-space: nowrap;
         }
         tr:nth-child(even) {
             background-color: #f2f2f2;
@@ -79,85 +79,80 @@
     <h1>合唱団じゃがいも 演奏曲目データベース</h1>
     
     <div class="search-box">
-        <input type="text" id="searchInput" placeholder="演奏会名、曲名、作曲者などで検索..." onkeyup="filterTable()">
+        <input type="text" id="searchInput" placeholder="演奏会名、曲名、指揮者、作曲者などで検索..." onkeyup="filterTable()">
     </div>
 
     <div id="loading">データベースを読み込んでいます...</div>
 
     <div class="table-responsive">
         <table id="dataTable" style="display:none;">
-            <thead>
-                <tr>
-                    <th>日付</th>
-                    <th>演奏会名</th>
-                    <th>ステージ</th>
-                    <th>曲目・組曲名等</th>
-                    <th>個別の曲名</th>
-                    <th>作曲者</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody">
-                </tbody>
+            <thead id="tableHead"></thead>
+            <tbody id="tableBody"></tbody>
         </table>
     </div>
 </div>
 
 <script>
-    // GitHub上にアップロードするCSVのファイル名
     const csvFileName = 'じゃがいも演奏曲目データベース.csv';
 
-    // PapaParseを使ってCSVを読み込む
     Papa.parse(csvFileName, {
-        download: true,       // 外部ファイルとして読み込む
-        header: true,         // 1行目を見出しとして扱う
-        skipEmptyLines: true, // 空行を無視する
+        download: true,
+        header: true,
+        skipEmptyLines: true,
         complete: function(results) {
             const data = results.data;
             displayData(data);
         },
         error: function(err) {
-            document.getElementById('loading').innerText = 'データの読み込みに失敗しました。ファイル名やパスを確認してください。';
+            document.getElementById('loading').innerText = 'データの読み込みに失敗しました。';
             console.error(err);
         }
     });
 
-    // 読み込んだデータをテーブルに表示する関数
     function displayData(data) {
+        if (data.length === 0) return;
+
+        const thead = document.getElementById('tableHead');
         const tbody = document.getElementById('tableBody');
+        thead.innerHTML = '';
         tbody.innerHTML = '';
 
+        // 【変更点1】CSVの1行目から項目名（列名）をすべて自動取得して見出しを作る
+        const headers = Object.keys(data[0]);
+        const headerRow = document.createElement('tr');
+        headers.forEach(header => {
+            const th = document.createElement('th');
+            th.textContent = header;
+            headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+
+        // 【変更点2】取得した項目名に合わせて、各行のデータをすべて表示する
         data.forEach(row => {
-            // データが空の場合はスキップ
-            if (!row['演奏会名']) return;
+            if (!row['演奏会名']) return; // 空のデータはスキップ
 
             const tr = document.createElement('tr');
             
-            // 表示したい列を指定してHTMLを生成
-            tr.innerHTML = `
-                <td style="white-space: nowrap;">${row['日付'] || ''}</td>
-                <td>${row['演奏会名'] || ''}</td>
-                <td>${row['ステージ'] || ''}</td>
-                <td>${row['曲目・組曲名等'] || ''}</td>
-                <td>${row['個別の曲名'] || ''}</td>
-                <td>${row['作曲'] || ''}</td>
-            `;
+            headers.forEach(header => {
+                const td = document.createElement('td');
+                td.textContent = row[header] || ''; // セルにデータを挿入
+                tr.appendChild(td);
+            });
+            
             tbody.appendChild(tr);
         });
 
-        // ロード画面を消してテーブルを表示
         document.getElementById('loading').style.display = 'none';
         document.getElementById('dataTable').style.display = 'table';
     }
 
-    // 検索機能の関数
     function filterTable() {
         const input = document.getElementById('searchInput');
         const filter = input.value.toLowerCase();
         const table = document.getElementById('dataTable');
         const tr = table.getElementsByTagName('tr');
 
-        // 各行をループして、検索文字が含まれているかチェック
-        for (let i = 1; i < tr.length; i++) { // 1から始めるのはヘッダー行を飛ばすため
+        for (let i = 1; i < tr.length; i++) {
             let rowText = tr[i].textContent || tr[i].innerText;
             if (rowText.toLowerCase().indexOf(filter) > -1) {
                 tr[i].style.display = '';
