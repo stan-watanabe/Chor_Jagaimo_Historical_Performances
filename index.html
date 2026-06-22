@@ -14,7 +14,7 @@
             padding: 20px;
         }
         .container {
-            max-width: 1200px; /* 全列表示に合わせて少し幅を広げました */
+            max-width: 1200px;
             margin: 0 auto;
             background: #fff;
             padding: 30px;
@@ -40,14 +40,17 @@
             border: 1px solid #ccc;
             border-radius: 4px;
         }
-        .table-responsive {
-            overflow-x: auto; /* 画面より表が広い場合は横スクロールになります */
+        /* スクロールを確実にするためのラッパー */
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            margin-top: 10px;
+            border: 1px solid #ddd;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
-            white-space: nowrap; /* セル内の文字の折り返しを防止 */
+            white-space: nowrap; /* 文字の折り返しを防ぎます */
         }
         th, td {
             border: 1px solid #ddd;
@@ -71,25 +74,18 @@
             font-size: 1.2rem;
             margin: 20px 0;
         }
-        .table-responsive {
-            /* auto を scroll に変更して、強制的にバー（レール部分）を表示させます */
-            overflow-x: scroll; 
-            /* バーが表と被らないように少し余白を設けます */
-            padding-bottom: 10px; 
-        }
-        /* 横スクロールバーを常に表示して目立たせる設定 */
-        .table-responsive::-webkit-scrollbar {
+        /* スクロールバーのデザイン */
+        .table-wrapper::-webkit-scrollbar {
             height: 12px;
         }
-        .table-responsive::-webkit-scrollbar-track {
+        .table-wrapper::-webkit-scrollbar-track {
             background: #f1f1f1;
-            border-radius: 4px;
         }
-        .table-responsive::-webkit-scrollbar-thumb {
+        .table-wrapper::-webkit-scrollbar-thumb {
             background: #bbb;
-            border-radius: 4px;
+            border-radius: 6px;
         }
-        .table-responsive::-webkit-scrollbar-thumb:hover {
+        .table-wrapper::-webkit-scrollbar-thumb:hover {
             background: #888;
         }
     </style>
@@ -105,7 +101,7 @@
 
     <div id="loading">データベースを読み込んでいます...</div>
 
-    <div class="table-responsive">
+    <div class="table-wrapper">
         <table id="dataTable" style="display:none;">
             <thead id="tableHead"></thead>
             <tbody id="tableBody"></tbody>
@@ -121,8 +117,10 @@
         header: true,
         skipEmptyLines: true,
         complete: function(results) {
+            // 【修正部分】 CSVの1行目（ヘッダー）をPapaParseの機能で正確に取得
+            const headers = results.meta.fields;
             const data = results.data;
-            displayData(data);
+            displayData(headers, data);
         },
         error: function(err) {
             document.getElementById('loading').innerText = 'データの読み込みに失敗しました。';
@@ -130,16 +128,15 @@
         }
     });
 
-    function displayData(data) {
-        if (data.length === 0) return;
+    function displayData(headers, data) {
+        if (!headers || headers.length === 0) return;
 
         const thead = document.getElementById('tableHead');
         const tbody = document.getElementById('tableBody');
         thead.innerHTML = '';
         tbody.innerHTML = '';
 
-        // 【変更点1】CSVの1行目から項目名（列名）をすべて自動取得して見出しを作る
-        const headers = Object.keys(data[0]);
+        // 見出し行の生成
         const headerRow = document.createElement('tr');
         headers.forEach(header => {
             const th = document.createElement('th');
@@ -148,18 +145,16 @@
         });
         thead.appendChild(headerRow);
 
-        // 【変更点2】取得した項目名に合わせて、各行のデータをすべて表示する
+        // データ行の生成
         data.forEach(row => {
-            if (!row['演奏会名']) return; // 空のデータはスキップ
+            if (!row['演奏会名']) return; // 演奏会名がない空行はスキップ
 
             const tr = document.createElement('tr');
-            
             headers.forEach(header => {
                 const td = document.createElement('td');
-                td.textContent = row[header] || ''; // セルにデータを挿入
+                td.textContent = row[header] || '';
                 tr.appendChild(td);
             });
-            
             tbody.appendChild(tr);
         });
 
