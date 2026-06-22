@@ -40,17 +40,21 @@
             border: 1px solid #ccc;
             border-radius: 4px;
         }
+        
         /* スクロールを確実にするためのラッパー */
         .table-wrapper {
             width: 100%;
-            overflow-x: auto;
+            max-height: 600px; /* ★追加：表の高さを最大600pxに制限します */
+            overflow: auto;    /* ★変更：はみ出した場合は縦も横もスクロールさせます */
             margin-top: 10px;
             border: 1px solid #ddd;
         }
+
+        /* 既存の table などの設定はそのまま */
         table {
             width: 100%;
             border-collapse: collapse;
-            white-space: nowrap; /* 文字の折り返しを防ぎます */
+            white-space: nowrap; 
         }
         th, td {
             border: 1px solid #ddd;
@@ -58,9 +62,13 @@
             text-align: left;
             font-size: 0.95rem;
         }
+
         th {
             background-color: #3498db;
             color: white;
+            position: sticky; /* ★追加：縦スクロールしても見出しを上部に固定します */
+            top: 0;           /* ★追加：固定する位置（一番上） */
+            z-index: 10;      /* ★追加：他の文字より手前に表示させます */
         }
         tr:nth-child(even) {
             background-color: #f2f2f2;
