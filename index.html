@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>合唱団じゃがいも 演奏曲目データベース</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .search-box {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .search-box input {
+            width: 80%;
+            max-width: 400px;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .table-responsive {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+            font-size: 0.95rem;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+            white-space: nowrap;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #e8f4f8;
+        }
+        #loading {
+            text-align: center;
+            color: #666;
+            font-size: 1.2rem;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>合唱団じゃがいも 演奏曲目データベース</h1>
+    
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="演奏会名、曲名、作曲者などで検索..." onkeyup="filterTable()">
+    </div>
+
+    <div id="loading">データベースを読み込んでいます...</div>
+
+    <div class="table-responsive">
+        <table id="dataTable" style="display:none;">
+            <thead>
+                <tr>
+                    <th>日付</th>
+                    <th>演奏会名</th>
+                    <th>ステージ</th>
+                    <th>曲目・組曲名等</th>
+                    <th>個別の曲名</th>
+                    <th>作曲者</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // GitHub上にアップロードするCSVのファイル名
+    const csvFileName = 'じゃがいも演奏曲目データベース.csv';
+
+    // PapaParseを使ってCSVを読み込む
+    Papa.parse(csvFileName, {
+        download: true,       // 外部ファイルとして読み込む
+        header: true,         // 1行目を見出しとして扱う
+        skipEmptyLines: true, // 空行を無視する
+        complete: function(results) {
+            const data = results.data;
+            displayData(data);
+        },
+        error: function(err) {
+            document.getElementById('loading').innerText = 'データの読み込みに失敗しました。ファイル名やパスを確認してください。';
+            console.error(err);
+        }
+    });
+
+    // 読み込んだデータをテーブルに表示する関数
+    function displayData(data) {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+
+        data.forEach(row => {
+            // データが空の場合はスキップ
+            if (!row['演奏会名']) return;
+
+            const tr = document.createElement('tr');
+            
+            // 表示したい列を指定してHTMLを生成
+            tr.innerHTML = `
+                <td style="white-space: nowrap;">${row['日付'] || ''}</td>
+                <td>${row['演奏会名'] || ''}</td>
+                <td>${row['ステージ'] || ''}</td>
+                <td>${row['曲目・組曲名等'] || ''}</td>
+                <td>${row['個別の曲名'] || ''}</td>
+                <td>${row['作曲'] || ''}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // ロード画面を消してテーブルを表示
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('dataTable').style.display = 'table';
+    }
+
+    // 検索機能の関数
+    function filterTable() {
+        const input = document.getElementById('searchInput');
+        const filter = input.value.toLowerCase();
+        const table = document.getElementById('dataTable');
+        const tr = table.getElementsByTagName('tr');
+
+        // 各行をループして、検索文字が含まれているかチェック
+        for (let i = 1; i < tr.length; i++) { // 1から始めるのはヘッダー行を飛ばすため
+            let rowText = tr[i].textContent || tr[i].innerText;
+            if (rowText.toLowerCase().indexOf(filter) > -1) {
+                tr[i].style.display = '';
+            } else {
+                tr[i].style.display = 'none';
+            }
+        }
+    }
+</script>
+
+</body>
+</html>
